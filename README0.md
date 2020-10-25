@@ -10,12 +10,12 @@ To pass this captcha, the piece need to be moved to his gap.
 
 Here's an example of the captcha:
 
-![Captcha Example](example/captcha.png)
+![Captcha Example](./rdm_slider.png)
 
 For this solver, we just need the 2 images that form this captcha (piece and background):
 
-![Piece](example/piece.png)
-![Background](example/background.png)
+![Piece](./test0_piece.png)
+![Background](./test0_background.png)
 
 You can find these images in the html of the web page. For example:
 

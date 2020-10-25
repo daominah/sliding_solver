@@ -1,0 +1,10 @@
+# python
+.pyc
+__pycache__
+venv
+/build
+/dist
+*.egg-info/
+
+.idea
+tmp_debug_*
