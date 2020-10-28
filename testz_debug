@@ -1,0 +1,10 @@
+test2+test3
+2020-10-28T20:25:23.953Z:  findDiffPosition:  [ 157, 84 ]
+2020-10-28T20:25:23.981Z:  findPuzzlePosition:  [ 30, 84 ]
+2020-10-28T20:25:23.981Z:  piece: x: 30 , diffX: 157
+2020-10-28T20:25:23.984Z:  slideButton width: 65.96875
+2020-10-28T20:25:23.984Z:  mouse down at slideButton: x: 342.484375
+2020-10-28T20:25:24.005Z:  mouse move to: x: 433.515625, dx: 91.03125
+2020-10-28T20:25:24.572Z:  findPuzzlePosition:  [ 121, 84 ]
+2020-10-28T20:25:24.572Z:  new piece pos: x: 121
+2020-10-28T20:25:24.572Z:  mouse move to: x: 469.515625, dx: 36

@@ -17,11 +17,12 @@ class PuzleSolver:
         res = cv2.matchTemplate(background, template, cv2.TM_CCOEFF_NORMED)
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
         top_left = max_loc
+        print("top_left: ", top_left)
 
-        origin = x_inf
+        origin = x_inf  # most left x position of the piece
         end = top_left[0] + PIXELS_EXTENSION
 
-        return end - origin
+        return end - origin, origin+5
 
     def __background_preprocessing(self, y_sup, y_inf):
         background = self.__sobel_operator(self.background_path)
@@ -34,6 +35,7 @@ class PuzleSolver:
     def __piece_preprocessing(self):
         img = self.__sobel_operator(self.piece_path)
         x, w, y, h = self.__crop_piece(img)
+        print("piece x w y h: ", x, w, y, h)
         template = img[y:h, x:w]
 
         template = self.__extend_template_boundary(template)

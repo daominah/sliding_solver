@@ -15,11 +15,12 @@ Example request body:
 }
 ````
 
-Response (position X of the piece to the background):
+Response (position X of the piece and different X to the background):
 
 ````json
 {
-    "MostLeftX": 91
+    "DiffX": 136,
+    "PieceLeftX": 5
 }
 ````
 

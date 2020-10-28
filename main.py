@@ -72,10 +72,10 @@ def handleSolve():
         piece, background = pieceFile.name, backgroundFile.name
         print("piece: %s, background: %s" % (piece, background))
         solver0 = PuzleSolver(piece, background)
-        mostLeftX = solver0.get_position()
+        diffX, pieceX = solver0.get_position()
         pieceFile.close()
         backgroundFile.close()
-        return {"MostLeftX": mostLeftX}
+        return {"DiffX": diffX, "PieceLeftX": pieceX}
     except Exception as err:
         return str(err), 400
 
