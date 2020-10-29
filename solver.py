@@ -3,6 +3,7 @@ import numpy as np
 
 
 PIXELS_EXTENSION = 10
+MAGIC = 5
 
 
 class PuzleSolver:
@@ -11,22 +12,25 @@ class PuzleSolver:
         self.background_path = background_path
 
     def get_position(self):
-        template, x_inf, y_sup, y_inf = self.__piece_preprocessing()
-        background = self.__background_preprocessing(y_sup, y_inf)
+        print("_"*40)
+        template, x0, y0, y1 = self.__piece_preprocessing()
+        background = self.__background_preprocessing(y0, y1)
 
         res = cv2.matchTemplate(background, template, cv2.TM_CCOEFF_NORMED)
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
         top_left = max_loc
-        print("top_left: ", top_left)
+        # print("top left match (with padding): ", top_left)
 
-        origin = x_inf  # most left x position of the piece
+        origin = x0
         end = top_left[0] + PIXELS_EXTENSION
 
-        return end - origin, origin+5
+        diffX, pieceX = end - origin, origin + MAGIC
+        print("diffX: %s, pieceX: %s" % (diffX, pieceX))
+        return diffX, pieceX
 
     def __background_preprocessing(self, y_sup, y_inf):
         background = self.__sobel_operator(self.background_path)
-        background = background[y_sup:y_inf, :]
+        # background = background[y_sup:y_inf, :]
         background = self.__extend_background_boundary(background)
         background = self.__img_to_grayscale(background)
 
@@ -34,14 +38,14 @@ class PuzleSolver:
 
     def __piece_preprocessing(self):
         img = self.__sobel_operator(self.piece_path)
-        x, w, y, h = self.__crop_piece(img)
-        print("piece x w y h: ", x, w, y, h)
-        template = img[y:h, x:w]
+        x0, x1, y0, y1 = self.__crop_piece(img)
+        print("piece x0, x1, y0, y1: ", x0+MAGIC, x1-MAGIC, y0+MAGIC, y1-MAGIC)
+        template = img[y0:y1, x0:x1]
 
         template = self.__extend_template_boundary(template)
         template = self.__img_to_grayscale(template)
 
-        return template, x, y, h
+        return template, x0, y0, y1
 
     def __crop_piece(self, img):
         white_rows = []

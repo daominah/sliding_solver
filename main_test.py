@@ -1,7 +1,7 @@
 from solver import PuzleSolver
 
 
-for i in range(0, 20):
+for i in range(0, 10):
     try:
         if i == 2:
             print("_"*120)
