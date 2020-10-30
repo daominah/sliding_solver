@@ -55,6 +55,7 @@ def handleSolve():
                404
 
     try:
+        print('*'*40)
         reqBody = request.json
         pieceBase64 = reqBody["Piece"]
         pieceBase64 = removePrefix(pieceBase64, imgBase64Prefix)
@@ -62,21 +63,23 @@ def handleSolve():
         backgroundBase64 = removePrefix(backgroundBase64, imgBase64Prefix)
 
         pieceFile = tempfile.NamedTemporaryFile()
-        # pieceFile = open("tmp_debug_piece.png", "wb")  # debug only
+        pieceFile = open("tmp_debug_piece.png", "wb")  # debug only
         pieceFile.write(base64.b64decode(pieceBase64))
 
         backgroundFile = tempfile.NamedTemporaryFile()
-        # backgroundFile = open("tmp_debug_background.png", "wb")  # debug only
+        backgroundFile = open("tmp_debug_background.png", "wb")  # debug only
         backgroundFile.write(base64.b64decode(backgroundBase64))
 
         piece, background = pieceFile.name, backgroundFile.name
-        print("piece: %s, background: %s" % (piece, background))
+        print("piece: %s (%.1f kB), background: %s (%.1f kB)" % (
+            piece, len(pieceBase64)/1365, background, len(backgroundBase64)/1365))
         solver0 = PuzleSolver(piece, background)
         diffX, pieceX = solver0.get_position()
         pieceFile.close()
         backgroundFile.close()
         return {"DiffX": diffX, "PieceLeftX": pieceX}
     except Exception as err:
+        print("error handleSolve: ", err)
         return str(err), 400
 
 

@@ -7,7 +7,7 @@ RUN ${BIN_PYTHON} -m pip install -r /requirements.txt
 ENV APP_DIR=/python/src/app
 WORKDIR ${APP_DIR}
 COPY . ${APP_DIR}
-RUN ${BIN_PYTHON} main_test.py
+RUN ${BIN_PYTHON} solver_test.py
 
 EXPOSE 15715
 

@@ -1,4 +1,4 @@
-# Solver for GeeTest's sliding CAPTCHA
+# Solver sliding CAPTCHA
 
 ## API
 

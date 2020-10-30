@@ -1,3 +1,5 @@
+import sys
+
 import cv2
 import numpy as np
 
@@ -12,14 +14,13 @@ class PuzleSolver:
         self.background_path = background_path
 
     def get_position(self):
-        print("_"*40)
+        print("piece: %s, background: %s" % (self.piece_path, self.background_path))
         template, x0, y0, y1 = self.__piece_preprocessing()
         background = self.__background_preprocessing(y0, y1)
 
         res = cv2.matchTemplate(background, template, cv2.TM_CCOEFF_NORMED)
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
         top_left = max_loc
-        # print("top left match (with padding): ", top_left)
 
         origin = x0
         end = top_left[0] + PIXELS_EXTENSION
@@ -88,6 +89,10 @@ class PuzleSolver:
         ddepth = cv2.CV_16S
 
         img = cv2.imread(img_path, cv2.IMREAD_COLOR)
+        imgShape = None
+        if img is not None:
+            imgShape = img.shape
+        print("imread %s shape: %s" % (img_path, imgShape))
         img = cv2.GaussianBlur(img, (3, 3), 0)
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         grad_x = cv2.Sobel(gray, ddepth, 1, 0, ksize=3, scale=scale, delta=delta, borderType=cv2.BORDER_DEFAULT)
