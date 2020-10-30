@@ -1,7 +1,7 @@
 from solver import PuzleSolver
 
 
-for i in range(0, 5):
+for i in range(0, 6):
     print("_"*40, " i ", i)
     try:
         piece, background = "test%s_piece.png" % i, "test%s_background.png" % i

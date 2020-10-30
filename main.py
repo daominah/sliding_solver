@@ -63,11 +63,11 @@ def handleSolve():
         backgroundBase64 = removePrefix(backgroundBase64, imgBase64Prefix)
 
         pieceFile = tempfile.NamedTemporaryFile()
-        pieceFile = open("tmp_debug_piece.png", "wb")  # debug only
+        # pieceFile = open("tmp_debug_piece.png", "wb")  # debug only
         pieceFile.write(base64.b64decode(pieceBase64))
 
         backgroundFile = tempfile.NamedTemporaryFile()
-        backgroundFile = open("tmp_debug_background.png", "wb")  # debug only
+        # backgroundFile = open("tmp_debug_background.png", "wb")  # debug only
         backgroundFile.write(base64.b64decode(backgroundBase64))
 
         piece, background = pieceFile.name, backgroundFile.name
