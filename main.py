@@ -5,7 +5,7 @@ import tempfile
 from flask import Flask
 from flask import request
 
-from solver import SlidingSolver
+from solver import SlidingSolver, SlidingSolver2Background
 
 
 app = Flask(__name__)
@@ -71,12 +71,48 @@ def handleSolve():
         backgroundFile.write(base64.b64decode(backgroundBase64))
 
         piece, background = pieceFile.name, backgroundFile.name
-        print("request: piece: %s (%.1f kB), background: %s (%.1f kB)" % (
+        print("request /solve: piece: %s (%.1f kB), background: %s (%.1f kB)" % (
             piece, len(pieceBase64)/1365, background, len(backgroundBase64)/1365))
         solver0 = SlidingSolver(piece, background)
         diffX, pieceX = solver0.Solve()
         pieceFile.close()
         backgroundFile.close()
+        ret = {"DiffX": diffX, "PieceLeftX": pieceX}
+        print("response: ", ret)
+        return ret
+    except Exception as err:
+        print("error handleSolve: ", err)
+        return str(err), 400
+
+
+@app.route('/solve2', methods=['GET', 'POST'])
+def handleSolve2():
+    if request.method == 'GET':
+        return "Use POST request to send images data: " + \
+               json.dumps({"BeginBackground": "base64ed",
+                           "MovedBackground": "base64ed"}), \
+               404
+
+    try:
+        print('*'*40)
+        reqBody = request.json
+        beginBGData = reqBody["BeginBackground"]
+        beginBGData = removePrefix(beginBGData, imgBase64Prefix)
+        movedBGData = reqBody["MovedBackground"]
+        movedBGData = removePrefix(movedBGData, imgBase64Prefix)
+
+        beginBGFile = tempfile.NamedTemporaryFile(suffix=".png")
+        beginBGFile.write(base64.b64decode(beginBGData))
+        movedBGFile = tempfile.NamedTemporaryFile(suffix=".png")
+        movedBGFile.write(base64.b64decode(movedBGData))
+
+        print("request /solve2: piece: %s (%.1f kB), background: %s (%.1f kB)" % (
+            beginBGFile.name, len(beginBGData)/1365,
+            movedBGFile.name, len(movedBGData)/1365))
+        solver2 = SlidingSolver2Background(beginBGFile.name, movedBGFile.name)
+        diffX, pieceX = solver2.Solve()
+        beginBGFile.close()
+        movedBGFile.close()
         ret = {"DiffX": diffX, "PieceLeftX": pieceX}
         print("response: ", ret)
         return ret

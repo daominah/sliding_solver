@@ -80,3 +80,39 @@ class SlidingSolver:
         diffX = maxMatchLocation[0] - pLeftX
         # print("debug SlidingSolver: diffX: %s, pieceX: %s" % (diffX, pLeftX))
         return diffX, pLeftX
+
+
+class SlidingSolver2Background:
+    def __init__(self, beginBGPath, movedBGPath):
+        self.beginGray = None
+        self.movedGray = None
+        try:
+            self.beginGray = cv2.imread(beginBGPath, cv2.IMREAD_GRAYSCALE)
+        except Exception as err:
+            raise Exception("error imread beginBG: ", err)
+        if self.beginGray is None:
+            raise Exception("error beginBG is nil")
+        try:
+            self.movedGray = cv2.imread(movedBGPath, cv2.IMREAD_GRAYSCALE)
+        except Exception as err:
+            raise Exception("error imread movedBG: ", err)
+        if self.movedGray is None:
+            raise Exception("error movedBG is nil")
+
+    # Solve returns diffX and pieceLeftX
+    def Solve(self):
+        diffEdge = CalcImageEdge(self.beginGray - self.movedGray)
+        pieceEdge, pLeftX, _, pRightX, _ = CropPiece(diffEdge)
+        # cv2.imshow("pieceEdge", pieceEdge); cv2.waitKey()
+
+        replacer = np.zeros((self.beginGray.shape[0], pRightX))
+        originGrayWithoutLeftPiece = np.concatenate(
+            (replacer, self.beginGray[:, pRightX:]), axis=1)
+
+        originEdge = CalcImageEdge(originGrayWithoutLeftPiece)
+        # cv2.imshow("originEdge", originEdge); cv2.waitKey()
+        simMap = cv2.matchTemplate(originEdge, pieceEdge, cv2.TM_CCOEFF_NORMED)
+        _, _, _, maxMatchLocation = cv2.minMaxLoc(simMap)
+        diffX = maxMatchLocation[0] - pLeftX
+        print("debug SlidingSolver: diffX: %s, pieceX: %s" % (diffX, pLeftX))
+        return diffX, pLeftX

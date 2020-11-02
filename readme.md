@@ -24,6 +24,26 @@ Response (position X of the piece and different X to the background):
 }
 ````
 
+### [/solve2](http://127.0.0.1:15715/solve2) POST
+
+Example request body:
+
+````json
+{
+    "BeginBackground": "base64ed",
+    "MovedBackground": "base64ed"
+}
+````
+
+Response (position X of the piece and different X to the background):
+
+````json
+{
+    "DiffX": 200,
+    "PieceLeftX": 0
+}
+````
+
 ## Dockerfile
 
 ````bash
