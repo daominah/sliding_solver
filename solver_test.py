@@ -34,4 +34,4 @@ if False:
         solver = PuzleSolver(piece, background)  # img 260x160
         diffX, pieceX = solver.get_position()
     except Exception as err:
-        print("error tmp test: ", err)
+        raise Exception("error tmp test: ", err)

@@ -1,4 +1,6 @@
+import os
 import sys
+import tempfile
 
 import cv2
 import numpy as np
@@ -104,6 +106,8 @@ class PuzleSolver:
         return grad
 
     def __img_to_grayscale(self, img):
-        tmp_path = "/tmp/sobel.png"
-        cv2.imwrite(tmp_path, img)
-        return cv2.imread(tmp_path, 0)
+        tmpFile = tempfile.NamedTemporaryFile(suffix=".png")
+        cv2.imwrite(tmpFile.name, img)
+        ret = cv2.imread(tmpFile.name, 0)
+        tmpFile.close()
+        return ret
