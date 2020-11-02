@@ -1,20 +1,20 @@
-from solver import PuzleSolver
+from solver import SlidingSolver
 
 diffXExpectations = {
     0: 91,
-    1: 165,
+    1: 164,
     2: 127,
     3: 36,
-    4: 137,
-    5: 160,
+    4: 138,
+    5: 159,
 }
 
 for i in range(0, 6):
     print("_"*40, " i ", i)
     try:
         piece, background = "test%s_piece.png" % i, "test%s_background.png" % i
-        solver = PuzleSolver(piece, background)  # img 260x160
-        diffX, pieceX = solver.get_position()
+        solver = SlidingSolver(piece, background)  # img 260x160
+        diffX, pieceX = solver.Solve()
         if i in diffXExpectations:
             expected = diffXExpectations[i]
             if not (expected*0.96 <= diffX <= expected*1.04):
@@ -27,11 +27,3 @@ for i in range(0, 6):
         else:
             raise err
 print("_"*40)
-
-if False:
-    try:
-        piece, background = "tmp_debug_piece.png", "tmp_debug_background.png"
-        solver = PuzleSolver(piece, background)  # img 260x160
-        diffX, pieceX = solver.get_position()
-    except Exception as err:
-        raise Exception("error tmp test: ", err)

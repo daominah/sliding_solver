@@ -49,8 +49,8 @@ python3
 Inside the console:
 
 ```python
-from solver import PuzleSolver
+from solver import SlidingSolver
 solver = PuzleSolver("example/piece.png", "example/background.png")
-solution = solver.get_position()
+solution = solver.Solve()
 solution
 ```

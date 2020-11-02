@@ -5,7 +5,7 @@ import tempfile
 from flask import Flask
 from flask import request
 
-from solver import PuzleSolver
+from solver import SlidingSolver
 
 
 app = Flask(__name__)
@@ -73,8 +73,8 @@ def handleSolve():
         piece, background = pieceFile.name, backgroundFile.name
         print("piece: %s (%.1f kB), background: %s (%.1f kB)" % (
             piece, len(pieceBase64)/1365, background, len(backgroundBase64)/1365))
-        solver0 = PuzleSolver(piece, background)
-        diffX, pieceX = solver0.get_position()
+        solver0 = SlidingSolver(piece, background)
+        diffX, pieceX = solver0.Solve()
         pieceFile.close()
         backgroundFile.close()
         return {"DiffX": diffX, "PieceLeftX": pieceX}

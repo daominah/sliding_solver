@@ -1,113 +1,82 @@
-import os
-import sys
-import tempfile
-
 import cv2
 import numpy as np
 
 
-PIXELS_EXTENSION = 10
-MAGIC = 5
+# CropPiece crops the first object (top left) on a empty background
+def CropPiece(imgGray):  # return [cropped, w0, h0, w2, h2]
+    denseRowIdxs = []
+    denseColIdxs = []
+    height, width = imgGray.shape
+    isMeetPiece = False
+    for rowI in range(height):
+        isEmptyRow = True
+        for e in imgGray[rowI, :]:
+            if e != 0:
+                denseRowIdxs.append(rowI)
+                isMeetPiece = True
+                isEmptyRow = False
+        if isMeetPiece and isEmptyRow:
+            break
+    isMeetPiece2 = False
+    for colI in range(width):
+        isEmptyRow = True
+        for e in imgGray[:, colI]:
+            if e != 0:
+                denseColIdxs.append(colI)
+                isMeetPiece2 = True
+                isEmptyRow = False
+        if isMeetPiece2 and isEmptyRow:
+            break
+    w0 = denseColIdxs[0]
+    h0 = denseRowIdxs[0]
+    w2 = denseColIdxs[-1]
+    h2 = denseRowIdxs[-1]
+    # print("debug CropPiece w0, h0, w2, h2: ", w0, h0, w2, h2)
+    return imgGray[h0:h2, w0:w2], w0, h0, w2, h2
 
 
-class PuzleSolver:
-    def __init__(self, piece_path, background_path):
-        self.piece_path = piece_path
-        self.background_path = background_path
+def CalcImageEdge(imgGrey):
+    scale = 1
+    delta = 0
+    ddepth = cv2.CV_16S
+    imgBlur = cv2.GaussianBlur(imgGrey, (3, 3), 0)
+    grad_x = cv2.Sobel(imgBlur, ddepth, 1, 0, ksize=3, scale=scale,
+                       delta=delta, borderType=cv2.BORDER_DEFAULT)
+    grad_y = cv2.Sobel(imgBlur, ddepth, 0, 1, ksize=3, scale=scale,
+                       delta=delta, borderType=cv2.BORDER_DEFAULT)
+    abs_grad_x = cv2.convertScaleAbs(grad_x)
+    abs_grad_y = cv2.convertScaleAbs(grad_y)
+    grad = cv2.addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0)
+    return grad
 
-    def get_position(self):
-        print("piece: %s, background: %s" % (self.piece_path, self.background_path))
-        template, x0, y0, y1 = self.__piece_preprocessing()
-        background = self.__background_preprocessing(y0, y1)
 
-        res = cv2.matchTemplate(background, template, cv2.TM_CCOEFF_NORMED)
-        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
-        top_left = max_loc
+class SlidingSolver:
+    def __init__(self, piecePath, backgroundPath):
+        self.pieceGray = None
+        self.backgroundGray = None
+        try:
+            self.pieceGray = cv2.imread(piecePath, cv2.IMREAD_GRAYSCALE)
+        except Exception as err:
+            raise Exception("error imread piece: ", err)
+        if self.pieceGray is None:
+            raise Exception("error piece is nil")
+        try:
+            self.backgroundGray = cv2.imread(backgroundPath, cv2.IMREAD_GRAYSCALE)
+        except Exception as err:
+            raise Exception("error imread background: ", err)
+        if self.backgroundGray is None:
+            raise Exception("error background is nil")
 
-        origin = x0
-        end = top_left[0] + PIXELS_EXTENSION
-
-        diffX, pieceX = end - origin, origin + MAGIC
-        print("diffX: %s, pieceX: %s" % (diffX, pieceX))
-        return diffX, pieceX
-
-    def __background_preprocessing(self, y_sup, y_inf):
-        background = self.__sobel_operator(self.background_path)
-        # background = background[y_sup:y_inf, :]
-        background = self.__extend_background_boundary(background)
-        background = self.__img_to_grayscale(background)
-
-        return background
-
-    def __piece_preprocessing(self):
-        img = self.__sobel_operator(self.piece_path)
-        x0, x1, y0, y1 = self.__crop_piece(img)
-        print("piece x0, x1, y0, y1: ", x0+MAGIC, x1-MAGIC, y0+MAGIC, y1-MAGIC)
-        template = img[y0:y1, x0:x1]
-
-        template = self.__extend_template_boundary(template)
-        template = self.__img_to_grayscale(template)
-
-        return template, x0, y0, y1
-
-    def __crop_piece(self, img):
-        white_rows = []
-        white_columns = []
-        r, c = img.shape
-
-        for row in range(r):
-            for x in img[row, :]:
-                if x != 0:
-                    white_rows.append(row)
-
-        for column in range(c):
-            for x in img[:, column]:
-                if x != 0:
-                    white_columns.append(column)
-
-        x = white_columns[0]
-        w = white_columns[-1]
-        y = white_rows[0]
-        h = white_rows[-1]
-
-        return x, w, y, h
-
-    def __extend_template_boundary(self, template):
-        extra_border = np.zeros((template.shape[0], PIXELS_EXTENSION), dtype=int)
-        template = np.hstack((extra_border, template, extra_border))
-
-        extra_border = np.zeros((PIXELS_EXTENSION, template.shape[1]), dtype=int)
-        template = np.vstack((extra_border, template, extra_border))
-
-        return template
-
-    def __extend_background_boundary(self, background):
-        extra_border = np.zeros((PIXELS_EXTENSION, background.shape[1]), dtype=int)
-        return np.vstack((extra_border, background, extra_border))
-
-    def __sobel_operator(self, img_path):
-        scale = 1
-        delta = 0
-        ddepth = cv2.CV_16S
-
-        img = cv2.imread(img_path, cv2.IMREAD_COLOR)
-        imgShape = None
-        if img is not None:
-            imgShape = img.shape
-        print("imread %s shape: %s" % (img_path, imgShape))
-        img = cv2.GaussianBlur(img, (3, 3), 0)
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        grad_x = cv2.Sobel(gray, ddepth, 1, 0, ksize=3, scale=scale, delta=delta, borderType=cv2.BORDER_DEFAULT)
-        grad_y = cv2.Sobel(gray, ddepth, 0, 1, ksize=3, scale=scale, delta=delta, borderType=cv2.BORDER_DEFAULT)
-        abs_grad_x = cv2.convertScaleAbs(grad_x)
-        abs_grad_y = cv2.convertScaleAbs(grad_y)
-        grad = cv2.addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0)
-
-        return grad
-
-    def __img_to_grayscale(self, img):
-        tmpFile = tempfile.NamedTemporaryFile(suffix=".png")
-        cv2.imwrite(tmpFile.name, img)
-        ret = cv2.imread(tmpFile.name, 0)
-        tmpFile.close()
-        return ret
+    # Solve returns diffX and pieceLeftX
+    def Solve(self):
+        pieceInBGEdge = CalcImageEdge(self.pieceGray)
+        pieceEdge, pLeftX, _, _, _ = CropPiece(pieceInBGEdge)
+        # cv2.imshow("pieceEdge: ", pieceEdge); cv2.waitKey()
+        backgroundEdge = CalcImageEdge(self.backgroundGray)
+        # cv2.imshow("backgroundEdge: ", backgroundEdge); cv2.waitKey()
+        similarMap = cv2.matchTemplate(backgroundEdge, pieceEdge,
+                                       cv2.TM_CCOEFF_NORMED)
+        _, _, _, maxMatchLocation = cv2.minMaxLoc(similarMap)
+        diffX = maxMatchLocation[0] - pLeftX
+        print("debug SlidingSolver: diffX: %s, pieceX: %s" % (diffX, pLeftX))
+        return diffX, pLeftX
