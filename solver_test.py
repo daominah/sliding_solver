@@ -28,8 +28,9 @@ for i in range(0, 6):
 
 diffXExpectations2 = {
     0: 200,
+    1: 271,
 }
-for i in range(0, 1):
+for i in range(0, 2):
     print("_"*40, " i ", i)
     try:
         begin, moved = "test10%s_bg_begin.png" % i, "test10%s_bg_moved.png" % i
