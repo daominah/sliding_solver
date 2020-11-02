@@ -38,19 +38,6 @@ pip3 install -U pip
 pip3 install -r requirements.txt
 ```
 
-## Example of usage
+## Example
 
-Open the python console:
-
-```
-python3
-```
-
-Inside the console:
-
-```python
-from solver import SlidingSolver
-solver = PuzleSolver("example/piece.png", "example/background.png")
-solution = solver.Solve()
-solution
-```
+See [solver_test.py](./solver_test.py)

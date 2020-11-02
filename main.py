@@ -71,13 +71,15 @@ def handleSolve():
         backgroundFile.write(base64.b64decode(backgroundBase64))
 
         piece, background = pieceFile.name, backgroundFile.name
-        print("piece: %s (%.1f kB), background: %s (%.1f kB)" % (
+        print("request: piece: %s (%.1f kB), background: %s (%.1f kB)" % (
             piece, len(pieceBase64)/1365, background, len(backgroundBase64)/1365))
         solver0 = SlidingSolver(piece, background)
         diffX, pieceX = solver0.Solve()
         pieceFile.close()
         backgroundFile.close()
-        return {"DiffX": diffX, "PieceLeftX": pieceX}
+        ret = {"DiffX": diffX, "PieceLeftX": pieceX}
+        print("response: ", ret)
+        return ret
     except Exception as err:
         print("error handleSolve: ", err)
         return str(err), 400

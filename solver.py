@@ -78,5 +78,5 @@ class SlidingSolver:
                                        cv2.TM_CCOEFF_NORMED)
         _, _, _, maxMatchLocation = cv2.minMaxLoc(similarMap)
         diffX = maxMatchLocation[0] - pLeftX
-        print("debug SlidingSolver: diffX: %s, pieceX: %s" % (diffX, pLeftX))
+        # print("debug SlidingSolver: diffX: %s, pieceX: %s" % (diffX, pLeftX))
         return diffX, pLeftX

@@ -15,6 +15,7 @@ for i in range(0, 6):
         piece, background = "test%s_piece.png" % i, "test%s_background.png" % i
         solver = SlidingSolver(piece, background)  # img 260x160
         diffX, pieceX = solver.Solve()
+        print("ret: diffX: %s, pieceX: %s" % (diffX, pieceX))
         if i in diffXExpectations:
             expected = diffXExpectations[i]
             if not (expected*0.96 <= diffX <= expected*1.04):
