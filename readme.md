@@ -51,7 +51,8 @@ docker build --tag=daominah/sliding_solver .
 
 docker rm -f sliding_solver
 
-docker run -dit --restart always --name sliding_solver -p 15715:15715 daominah/sliding_solver 
+docker run -dit --restart always --name sliding_solver \
+    -p 15715:15715 -e IS_DEBUG=true daominah/sliding_solver 
 
 # for debug images
 docker run --rm -p 15715:15715 -v ${PWD}:/python/src/app daominah/sliding_solver

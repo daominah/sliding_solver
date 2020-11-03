@@ -1,5 +1,6 @@
 import base64
 import json
+import os
 import tempfile
 
 from flask import Flask
@@ -73,6 +74,12 @@ def handleSolve():
         piece, background = pieceFile.name, backgroundFile.name
         print("request /solve: piece: %s (%.1f kB), background: %s (%.1f kB)" % (
             piece, len(pieceBase64)/1365, background, len(backgroundBase64)/1365))
+        if os.getenv("IS_DEBUG"):
+            print("pieceBase64:")
+            print(pieceBase64)
+            print("backgroundBase64:")
+            print(backgroundBase64)
+
         solver0 = SlidingSolver(piece, background)
         diffX, pieceX = solver0.Solve()
         pieceFile.close()
@@ -109,6 +116,12 @@ def handleSolve2():
         print("request /solve2: piece: %s (%.1f kB), background: %s (%.1f kB)" % (
             beginBGFile.name, len(beginBGData)/1365,
             movedBGFile.name, len(movedBGData)/1365))
+        if os.getenv("IS_DEBUG"):
+            print("beginBGData:")
+            print(beginBGData)
+            print("movedBGData:")
+            print(movedBGData)
+
         solver2 = SlidingSolver2Background(beginBGFile.name, movedBGFile.name)
         diffX, pieceX = solver2.Solve()
         beginBGFile.close()
