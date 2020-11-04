@@ -1,4 +1,8 @@
+import sys
+
 import cv2
+import cv2 as cv
+import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -49,6 +53,14 @@ def CalcImageEdge(imgGrey):
     grad = cv2.addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0)
     return grad
 
+
+def CalcImageOuterContour(imgGray):
+    contours, hierarchy = cv.findContours(
+        imgGray, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+    ret = cv.drawContours(np.zeros(imgGray.shape), contours, 0, (255, 0, 0), 1)
+    ret = ret.astype(np.uint8)
+    # plt.imshow(ret); plt.show()
+    return ret
 
 class SlidingSolver:
     def __init__(self, piecePath, backgroundPath):
@@ -101,17 +113,18 @@ class SlidingSolver2Background:
 
     # Solve returns diffX and pieceLeftX
     def Solve(self):
-        diffEdge = CalcImageEdge(self.beginGray - self.movedGray)
-        pieceEdge, pLeftX, _, pRightX, _ = CropPiece(diffEdge)
-        # cv2.imshow("pieceEdge", pieceEdge); cv2.waitKey()
+        diff = self.beginGray - self.movedGray
+        piece, pLeftX, _, pRightX, _ = CropPiece(diff)
+        pieceTpl = CalcImageEdge(piece)
+        plt.imshow(pieceTpl); plt.show()
 
         replacer = np.zeros((self.beginGray.shape[0], pRightX))
         originGrayWithoutLeftPiece = np.concatenate(
             (replacer, self.beginGray[:, pRightX:]), axis=1)
 
         originEdge = CalcImageEdge(originGrayWithoutLeftPiece)
-        # cv2.imshow("originEdge", originEdge); cv2.waitKey()
-        simMap = cv2.matchTemplate(originEdge, pieceEdge, cv2.TM_CCOEFF_NORMED)
+        # plt.imshow(originEdge); plt.show()
+        simMap = cv2.matchTemplate(originEdge, pieceTpl, cv2.TM_CCOEFF_NORMED)
         _, _, _, maxMatchLocation = cv2.minMaxLoc(simMap)
         diffX = maxMatchLocation[0] - pLeftX
         print("debug SlidingSolver: diffX: %s, pieceX: %s" % (diffX, pLeftX))
@@ -119,15 +132,13 @@ class SlidingSolver2Background:
 
 
 if __name__ == '__main__':
-    cv = cv2
-    import matplotlib.pyplot as plt
-
     img1Gray = cv2.imread("/home/tungdt/Desktop/test14_order.png", cv2.IMREAD_GRAYSCALE)
     img2Gray = cv2.imread("/home/tungdt/Desktop/test11_bg.png", cv2.IMREAD_GRAYSCALE)
 
     # img1, img2 = img1Gray, img2Gray
     # img1, img2 = cv2.GaussianBlur(img1Gray, (3, 3), 0), cv2.GaussianBlur(img2Gray, (3, 3), 0)
-    img1, img2 = CalcImageEdge(img1Gray), CalcImageEdge(img2Gray)
+    img1 = CalcImageEdge(img1Gray)
+    img2 = CalcImageEdge(img2Gray)
 
     # keyPoints and descriptors result from a feature detector
     kp1, des1, kp2, des2 = None, None, None, None

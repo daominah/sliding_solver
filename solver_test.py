@@ -1,4 +1,4 @@
-from solver import SlidingSolver, SlidingSolver2Background
+import solver
 
 
 diffXExpectations = {
@@ -8,14 +8,15 @@ diffXExpectations = {
     3: 36,
     4: 138,
     5: 159,
+    6: 178,
 }
 
-for i in range(0, 6):
+for i in range(0, 7):
     print("_"*40, " i ", i)
     try:
         piece, background = "test%s_piece.png" % i, "test%s_background.png" % i
-        solver = SlidingSolver(piece, background)  # img 260x160
-        diffX, pieceX = solver.Solve()
+        solver0 = solver.SlidingSolver(piece, background)  # img 260x160
+        diffX, pieceX = solver0.Solve()
         print("ret: diffX: %s, pieceX: %s" % (diffX, pieceX))
         if i in diffXExpectations:
             expected = diffXExpectations[i]
@@ -29,14 +30,15 @@ for i in range(0, 6):
 diffXExpectations2 = {
     0: 200,
     1: 271,
-    2: 0,
+    2: 178,
+    3: 220,
 }
 for i in range(0, 3):
     print("_"*40, " i ", i)
     try:
         begin, moved = "test10%s_bg_begin.png" % i, "test10%s_bg_moved.png" % i
-        solver = SlidingSolver2Background(begin, moved)
-        diffX, pieceX = solver.Solve()
+        solver0 = solver.SlidingSolver2Background(begin, moved)
+        diffX, pieceX = solver0.Solve()
         print("ret: diffX: %s, pieceX: %s" % (diffX, pieceX))
         if i in diffXExpectations:
             expected = diffXExpectations2[i]
