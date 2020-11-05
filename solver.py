@@ -43,7 +43,7 @@ def CalcImageEdge(imgGrey):
     scale = 1
     delta = 0
     ddepth = cv2.CV_16S
-    imgBlur = cv2.GaussianBlur(imgGrey, (3, 3), 0)
+    imgBlur = cv2.GaussianBlur(imgGrey, (5, 5), 0)
     grad_x = cv2.Sobel(imgBlur, ddepth, 1, 0, ksize=3, scale=scale,
                        delta=delta, borderType=cv2.BORDER_DEFAULT)
     grad_y = cv2.Sobel(imgBlur, ddepth, 0, 1, ksize=3, scale=scale,
@@ -54,6 +54,12 @@ def CalcImageEdge(imgGrey):
     return grad
 
 
+def CalcImageEdgeCanny(imgGrey):
+    highThreshold = 255
+    edges = cv.Canny(np.uint8(imgGrey), highThreshold/3, highThreshold)
+    return edges
+
+
 def CalcImageOuterContour(imgGray):
     contours, hierarchy = cv.findContours(
         imgGray, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
@@ -61,6 +67,7 @@ def CalcImageOuterContour(imgGray):
     ret = ret.astype(np.uint8)
     # plt.imshow(ret); plt.show()
     return ret
+
 
 class SlidingSolver:
     def __init__(self, piecePath, backgroundPath):
@@ -116,7 +123,7 @@ class SlidingSolver2Background:
         diff = self.beginGray - self.movedGray
         piece, pLeftX, _, pRightX, _ = CropPiece(diff)
         pieceTpl = CalcImageEdge(piece)
-        plt.imshow(pieceTpl); plt.show()
+        # plt.imshow(pieceTpl); plt.show()
 
         replacer = np.zeros((self.beginGray.shape[0], pRightX))
         originGrayWithoutLeftPiece = np.concatenate(
@@ -131,12 +138,11 @@ class SlidingSolver2Background:
         return diffX, pLeftX
 
 
-if __name__ == '__main__':
+if __name__ == '__main__': # TODO: features matching chinese captcha
     img1Gray = cv2.imread("/home/tungdt/Desktop/test14_order.png", cv2.IMREAD_GRAYSCALE)
     img2Gray = cv2.imread("/home/tungdt/Desktop/test11_bg.png", cv2.IMREAD_GRAYSCALE)
 
     # img1, img2 = img1Gray, img2Gray
-    # img1, img2 = cv2.GaussianBlur(img1Gray, (3, 3), 0), cv2.GaussianBlur(img2Gray, (3, 3), 0)
     img1 = CalcImageEdge(img1Gray)
     img2 = CalcImageEdge(img2Gray)
 
