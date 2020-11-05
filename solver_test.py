@@ -36,25 +36,27 @@ diffXExpectations2 = {
     4: 218,
     5: 208,
     6: 282,
+    7: 246,
+    8: 274,
+    9: 205,
 }
 
-for i in range(0, 7):
+for i in range(0, 10):
     print("_"*40, " i ", i)
     try:
         begin = "./tests_slide/test10%s_bg_begin.png" % i
         moved = "./tests_slide/test10%s_bg_moved.png" % i
         solver0 = solver.SlidingSolver2Background(begin, moved)
-        diffX, pieceX = solver0.Solve()
+        diffX, pieceX = solver0.Solve(isDebug=False)
         print("ret: diffX: %s, pieceX: %s" % (diffX, pieceX))
-        if i in diffXExpectations:
+        if i in diffXExpectations2:
             expected = diffXExpectations2[i]
             if not (expected*0.96 <= diffX <= expected*1.04):
                 raise Exception("FAIL test diffX: real: %.1f, expected: %.1f" %
                                 (diffX, expected))
 
     except Exception as err:  # file not found
-        # print(err)
-        if i != 4: # TODO: improve to pass test104
-            raise err
+        print(err)
+        raise err
 
 print("_"*40)

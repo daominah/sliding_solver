@@ -35,7 +35,7 @@ def CropPiece(imgGray):  # return [cropped, w0, h0, w2, h2]
     h0 = denseRowIdxs[0]
     w2 = denseColIdxs[-1]
     h2 = denseRowIdxs[-1]
-    # print("debug CropPiece w0, h0, w2, h2: ", w0, h0, w2, h2)
+    print("debug CropPiece w0, h0, w2, h2: ", w0, h0, w2, h2)
     return imgGray[h0:h2, w0:w2], w0, h0, w2, h2
 
 
@@ -55,20 +55,39 @@ def CalcImageEdge(imgGrey):
     return grad
 
 
+def addPadding(imgGray, padSize=5):
+    hPad = np.zeros((imgGray.shape[0], padSize), dtype=int)
+    ret = np.concatenate((hPad, imgGray), axis=1)
+    ret = np.concatenate((ret, hPad), axis=1)
+    vPad = np.zeros((padSize, ret.shape[1]), dtype=int)
+    ret = np.concatenate((vPad, ret), axis=0)
+    ret = np.concatenate((ret, vPad), axis=0)
+    return np.uint8(ret)
+
+
+def removePadding(imgGray, padSize=5):
+    h, w = imgGray.shape
+    return imgGray[padSize: h-padSize, padSize: w-padSize]
+
+
 # twitch params for SlidingSolver2Background
 def CalcImageEdge2(imgGrey):
+    img1 = np.uint8(imgGrey)
+    # img1 = addPadding(imgGrey)
     scale = 1
     delta = 0
     ddepth = cv2.CV_16S
-    imgBlur = cv2.GaussianBlur(imgGrey, (5, 5), 0)
+    imgBlur = cv2.GaussianBlur(img1, (5, 5), 0)
     grad_x = cv2.Sobel(imgBlur, ddepth, 1, 0, ksize=3, scale=scale,
                        delta=delta, borderType=cv2.BORDER_DEFAULT)
     grad_y = cv2.Sobel(imgBlur, ddepth, 0, 1, ksize=3, scale=scale,
                        delta=delta, borderType=cv2.BORDER_DEFAULT)
     abs_grad_x = cv2.convertScaleAbs(grad_x)
     abs_grad_y = cv2.convertScaleAbs(grad_y)
-    grad = cv2.addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0)
-    whoCare, ret = cv2.threshold(grad, 90, 255, cv2.THRESH_BINARY)
+    ret = cv2.addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0)
+    # whoCare, ret = cv2.threshold(ret, 85, 255, cv2.THRESH_BINARY)
+    # ret = removePadding(ret)
+    # print("ret CalcImageEdge2"); plt.imshow(ret); plt.show()
     return ret
 
 
@@ -139,6 +158,7 @@ class SlidingSolver2Background:
         self.movedGray = None
         try:
             self.beginGray = cv2.imread(beginBGPath, cv2.IMREAD_GRAYSCALE)
+            # print("beginGray shape: ", self.beginGray.shape)
         except Exception as err:
             raise Exception("error imread beginBG: ", err)
         if self.beginGray is None:
@@ -151,29 +171,26 @@ class SlidingSolver2Background:
             raise Exception("error movedBG is nil")
 
     # Solve returns diffX and pieceLeftX
-    def Solve(self):
+    def Solve(self, isDebug=False):
         diff = self.beginGray - self.movedGray
-        # plt.imshow(diff); plt.show()
-        piece, pLeftX, pTopY, pRightX, pBotY = CropPiece(diff)
+        _, pLeftX, pTopY, pRightX, pBotY = CropPiece(diff)
 
         calcEdgeFunc = CalcImageEdge2
-
-        pieceTpl = calcEdgeFunc(piece)
-        # plt.axis([0, self.beginGray.shape[0], 0, self.beginGray.shape[1]]); plt.imshow(pieceTpl); plt.show()
+        fullOriginEdge = calcEdgeFunc(self.beginGray)
+        pieceEdge = fullOriginEdge[pTopY:pBotY, pLeftX:pRightX]
+        # plt.imshow(pieceEdge); plt.show()
 
         replacer = np.zeros((self.beginGray.shape[0], pRightX))
         originGrayWithoutLeftPiece = np.concatenate(
             (replacer, self.beginGray[:, pRightX:]), axis=1)
-
         originGrayWithoutLeftPieceBand = \
             originGrayWithoutLeftPiece[max(0, pTopY-5): pBotY+5, :]
 
         backgroundEdge = calcEdgeFunc(originGrayWithoutLeftPieceBand)
-        debugOriginEdge = calcEdgeFunc(self.beginGray)
         # plt.imshow(backgroundEdge); plt.show()
 
         matchMethod = cv2.TM_CCOEFF_NORMED
-        simMap = cv2.matchTemplate(backgroundEdge, pieceTpl, matchMethod)
+        simMap = cv2.matchTemplate(backgroundEdge, pieceEdge, matchMethod)
         _, _, minLoc, maxLoc = cv2.minMaxLoc(simMap)
 
         bestLoc = maxLoc
@@ -184,9 +201,9 @@ class SlidingSolver2Background:
         # print("debug piece w0, h0, w2, h2: ", pLeftX, pTopY, pRightX, pBotY)
         # print("debug bestLoc: ", bestLoc)
         # print("debug SlidingSolver: diffX: %s, pieceX: %s" % (diffX, pLeftX))
-        # if True:
-        if False:
-            showImgWithRectangle(debugOriginEdge,
+
+        if isDebug:
+            showImgWithRectangle(fullOriginEdge,
                                  bestLoc[0], pTopY,
                                  bestLoc[0]+(pRightX-pLeftX), pBotY)
         return diffX, pLeftX
