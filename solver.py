@@ -39,6 +39,7 @@ def CropPiece(imgGray):  # return [cropped, w0, h0, w2, h2]
     return imgGray[h0:h2, w0:w2], w0, h0, w2, h2
 
 
+# DO NOT EDIT
 def CalcImageEdge(imgGrey):
     scale = 1
     delta = 0
@@ -54,19 +55,50 @@ def CalcImageEdge(imgGrey):
     return grad
 
 
+# twitch params for SlidingSolver2Background
+def CalcImageEdge2(imgGrey):
+    scale = 1
+    delta = 0
+    ddepth = cv2.CV_16S
+    imgBlur = cv2.GaussianBlur(imgGrey, (5, 5), 0)
+    grad_x = cv2.Sobel(imgBlur, ddepth, 1, 0, ksize=3, scale=scale,
+                       delta=delta, borderType=cv2.BORDER_DEFAULT)
+    grad_y = cv2.Sobel(imgBlur, ddepth, 0, 1, ksize=3, scale=scale,
+                       delta=delta, borderType=cv2.BORDER_DEFAULT)
+    abs_grad_x = cv2.convertScaleAbs(grad_x)
+    abs_grad_y = cv2.convertScaleAbs(grad_y)
+    grad = cv2.addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0)
+    whoCare, ret = cv2.threshold(grad, 90, 255, cv2.THRESH_BINARY)
+    return ret
+
+
 def CalcImageEdgeCanny(imgGrey):
+    img1 = imgGrey
+    # img1 = cv2.GaussianBlur(img1, (5, 5), 0)
+    # img1 = cv2.bilateralFilter(np.uint8(img1), 9, 75, 75)
     highThreshold = 255
-    edges = cv.Canny(np.uint8(imgGrey), highThreshold/3, highThreshold)
+    edges = cv.Canny(
+        np.uint8(img1), highThreshold/3, highThreshold, L2gradient=True)
     return edges
 
 
-def CalcImageOuterContour(imgGray):
-    contours, hierarchy = cv.findContours(
-        imgGray, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
-    ret = cv.drawContours(np.zeros(imgGray.shape), contours, 0, (255, 0, 0), 1)
+def CalcImageContour(imgGray, isOnlyExternal=False):
+    img1 = np.uint8(CalcImageEdge(imgGray))
+    mode, contourIdx = cv.RETR_TREE, -1
+    if isOnlyExternal:
+        mode, contourIdx = cv.RETR_EXTERNAL, 0
+    contours, hierarchy = cv.findContours(img1, mode, cv.CHAIN_APPROX_SIMPLE)
+    print("mode, contourIdx, retLen: ", mode, contourIdx, len(contours))
+    ret = cv.drawContours(imgGray, contours, contourIdx, (255, 0, 0), 1)
     ret = ret.astype(np.uint8)
     # plt.imshow(ret); plt.show()
     return ret
+
+
+# :param w0, h0, w2, h2: position of rectangle top left and bottom right
+def showImgWithRectangle(imgGray, w0, h0, w2, h2):
+    plt.imshow(cv.rectangle(imgGray, (w0, h0), (w2, h2), color=(255, 0, 0)))
+    plt.show()
 
 
 class SlidingSolver:
@@ -121,18 +153,40 @@ class SlidingSolver2Background:
     # Solve returns diffX and pieceLeftX
     def Solve(self):
         diff = self.beginGray - self.movedGray
-        piece, pLeftX, _, pRightX, _ = CropPiece(diff)
-        pieceTpl = CalcImageEdge(piece)
-        # plt.imshow(pieceTpl); plt.show()
+        # plt.imshow(diff); plt.show()
+        piece, pLeftX, pTopY, pRightX, pBotY = CropPiece(diff)
+
+        calcEdgeFunc = CalcImageEdge2
+
+        pieceTpl = calcEdgeFunc(piece)
+        # plt.axis([0, self.beginGray.shape[0], 0, self.beginGray.shape[1]]); plt.imshow(pieceTpl); plt.show()
 
         replacer = np.zeros((self.beginGray.shape[0], pRightX))
         originGrayWithoutLeftPiece = np.concatenate(
             (replacer, self.beginGray[:, pRightX:]), axis=1)
 
-        originEdge = CalcImageEdge(originGrayWithoutLeftPiece)
-        # plt.imshow(originEdge); plt.show()
-        simMap = cv2.matchTemplate(originEdge, pieceTpl, cv2.TM_CCOEFF_NORMED)
-        _, _, _, maxMatchLocation = cv2.minMaxLoc(simMap)
-        diffX = maxMatchLocation[0] - pLeftX
-        print("debug SlidingSolver: diffX: %s, pieceX: %s" % (diffX, pLeftX))
+        originGrayWithoutLeftPieceBand = \
+            originGrayWithoutLeftPiece[max(0, pTopY-5): pBotY+5, :]
+
+        backgroundEdge = calcEdgeFunc(originGrayWithoutLeftPieceBand)
+        debugOriginEdge = calcEdgeFunc(self.beginGray)
+        # plt.imshow(backgroundEdge); plt.show()
+
+        matchMethod = cv2.TM_CCOEFF_NORMED
+        simMap = cv2.matchTemplate(backgroundEdge, pieceTpl, matchMethod)
+        _, _, minLoc, maxLoc = cv2.minMaxLoc(simMap)
+
+        bestLoc = maxLoc
+        if matchMethod == cv2.TM_SQDIFF or matchMethod == cv2.TM_SQDIFF_NORMED:
+            bestLoc = minLoc
+        diffX = bestLoc[0] - pLeftX
+
+        # print("debug piece w0, h0, w2, h2: ", pLeftX, pTopY, pRightX, pBotY)
+        # print("debug bestLoc: ", bestLoc)
+        # print("debug SlidingSolver: diffX: %s, pieceX: %s" % (diffX, pLeftX))
+        # if True:
+        if False:
+            showImgWithRectangle(debugOriginEdge,
+                                 bestLoc[0], pTopY,
+                                 bestLoc[0]+(pRightX-pLeftX), pBotY)
         return diffX, pLeftX
