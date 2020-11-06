@@ -35,7 +35,7 @@ def CropPiece(imgGray):  # return [cropped, w0, h0, w2, h2]
     h0 = denseRowIdxs[0]
     w2 = denseColIdxs[-1]
     h2 = denseRowIdxs[-1]
-    print("debug CropPiece w0, h0, w2, h2: ", w0, h0, w2, h2)
+    # print("debug CropPiece w0, h0, w2, h2: ", w0, h0, w2, h2)
     return imgGray[h0:h2, w0:w2], w0, h0, w2, h2
 
 
@@ -56,10 +56,10 @@ def CalcImageEdge(imgGrey):
 
 
 def addPadding(imgGray, padSize=5):
-    hPad = np.zeros((imgGray.shape[0], padSize), dtype=int)
+    hPad = np.zeros((imgGray.shape[0], padSize))
     ret = np.concatenate((hPad, imgGray), axis=1)
     ret = np.concatenate((ret, hPad), axis=1)
-    vPad = np.zeros((padSize, ret.shape[1]), dtype=int)
+    vPad = np.zeros((padSize, ret.shape[1]))
     ret = np.concatenate((vPad, ret), axis=0)
     ret = np.concatenate((ret, vPad), axis=0)
     return np.uint8(ret)
@@ -138,17 +138,38 @@ class SlidingSolver:
             raise Exception("error background is nil")
 
     # Solve returns diffX and pieceLeftX
-    def Solve(self):
+    def Solve(self, isDebug=False):
         pieceInBGEdge = CalcImageEdge(self.pieceGray)
-        pieceEdge, pLeftX, _, _, _ = CropPiece(pieceInBGEdge)
-        # cv2.imshow("pieceEdge: ", pieceEdge); cv2.waitKey()
-        backgroundEdge = CalcImageEdge(self.backgroundGray)
-        # cv2.imshow("backgroundEdge: ", backgroundEdge); cv2.waitKey()
+        pieceEdge, pLeftX, pTopY, pRightX, pBotY = CropPiece(pieceInBGEdge)
+        # plt.imshow(pieceEdge); plt.show()
+
+        if pLeftX < 10:
+            backgroundWithoutLeftPiece = np.concatenate(
+                (np.zeros((self.backgroundGray.shape[0], pRightX)),
+                 self.backgroundGray[:, pRightX:]), axis=1)
+        else:  # the piece dragged to the middle of background
+            backgroundWithoutLeftPiece = self.backgroundGray
+
+        if pTopY < 10:
+            #  self_piece is not the piece with position on bg, only the piece
+            backgroundWithoutLeftPieceBand = backgroundWithoutLeftPiece
+        else:
+            backgroundWithoutLeftPieceBand = \
+                backgroundWithoutLeftPiece[max(0, pTopY-5): pBotY+5, :]
+
+        backgroundEdge = CalcImageEdge(backgroundWithoutLeftPieceBand)
+        # plt.imshow(backgroundEdge); plt.show()
+
         similarMap = cv2.matchTemplate(backgroundEdge, pieceEdge,
                                        cv2.TM_CCOEFF_NORMED)
-        _, _, _, maxMatchLocation = cv2.minMaxLoc(similarMap)
-        diffX = maxMatchLocation[0] - pLeftX
+        _, _, _, maxLoc = cv2.minMaxLoc(similarMap)
+        diffX = maxLoc[0] - pLeftX
+
         # print("debug SlidingSolver: diffX: %s, pieceX: %s" % (diffX, pLeftX))
+        if isDebug:
+            showImgWithRectangle(self.backgroundGray,
+                                 maxLoc[0], pTopY,
+                                 maxLoc[0]+(pRightX-pLeftX), pBotY)
         return diffX, pLeftX
 
 
@@ -180,9 +201,9 @@ class SlidingSolver2Background:
         pieceEdge = fullOriginEdge[pTopY:pBotY, pLeftX:pRightX]
         # plt.imshow(pieceEdge); plt.show()
 
-        replacer = np.zeros((self.beginGray.shape[0], pRightX))
         originGrayWithoutLeftPiece = np.concatenate(
-            (replacer, self.beginGray[:, pRightX:]), axis=1)
+            (np.zeros((self.beginGray.shape[0], pRightX)),
+             self.beginGray[:, pRightX:]), axis=1)
         originGrayWithoutLeftPieceBand = \
             originGrayWithoutLeftPiece[max(0, pTopY-5): pBotY+5, :]
 

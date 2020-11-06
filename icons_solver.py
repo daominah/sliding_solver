@@ -16,14 +16,14 @@ if __name__ == '__main__': # TODO: features matching chinese captcha
         sift = cv.SIFT_create()
         kp1, des1 = sift.detectAndCompute(img1, None)
         # imgDebug = cv.drawKeypoints(img1, kp1, None, color=(0, 255, 0), flags=0)
-        # cv.imshow("", imgDebug); cv.waitKey()
+        # plt.imshow(imgDebug, 'gray'), plt.show()
         kp2, des2 = sift.detectAndCompute(img2, None)
     else:
         orb = cv.ORB_create()
         kp1 = orb.detect(img1, None)
         kp1, des1 = orb.compute(img1, kp1)
         imgDebug = cv.drawKeypoints(img1, kp1, None, color=(0, 255, 0), flags=0)
-        cv.imshow("", imgDebug); cv.waitKey()
+        # plt.imshow(imgDebug, 'gray'), plt.show()
         kp2 = orb.detect(img2, None)
         kp2, des2 = orb.compute(img2, kp2)
 
@@ -55,4 +55,4 @@ if __name__ == '__main__': # TODO: features matching chinese captcha
                        matchesMask=matchesMask,  # draw only inliers
                        flags=2)
     img3 = cv.drawMatches(img1, kp1, img2, kp2, good, None, **draw_params)
-    plt.imshow(img3, 'gray'), plt.show()
+    # plt.imshow(img3, 'gray'), plt.show()
