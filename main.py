@@ -76,9 +76,9 @@ def handleSolve():
             piece, len(pieceBase64)/1365, background, len(backgroundBase64)/1365))
         if os.getenv("IS_DEBUG"):
             print("pieceBase64:")
-            print(pieceBase64)
+            print(imgBase64Prefix+pieceBase64)
             print("backgroundBase64:")
-            print(backgroundBase64)
+            print(imgBase64Prefix+backgroundBase64)
 
         solver0 = SlidingSolver(piece, background)
         diffX, pieceX = solver0.Solve()
@@ -118,9 +118,9 @@ def handleSolve2():
             movedBGFile.name, len(movedBGData)/1365))
         if os.getenv("IS_DEBUG"):
             print("beginBGData:")
-            print(beginBGData)
+            print(imgBase64Prefix+beginBGData)
             print("movedBGData:")
-            print(movedBGData)
+            print(imgBase64Prefix+movedBGData)
 
         solver2 = SlidingSolver2Background(beginBGFile.name, movedBGFile.name)
         diffX, pieceX = solver2.Solve()
