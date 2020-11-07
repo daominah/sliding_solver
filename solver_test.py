@@ -11,9 +11,12 @@ diffXExpectations = {
     6: 178,
     7: 171,
     8: 129,
+    9: 370,
+    10: 220,
+    11: 152,
 }
 
-for i in range(0, 9):
+for i in range(0, 12):
     print("_"*40, " i ", i)
     try:
         piece = "./tests_slide/test%s_piece.png" % i
