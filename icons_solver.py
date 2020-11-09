@@ -13,7 +13,6 @@ def CalcImageEdge3(imgGrey, isPiece=False):
         img1 = cv.addWeighted(img1, 1.2, np.zeros(img1.shape, dtype=np.uint8), 0, 0)
         # img1 = cv.GaussianBlur(img1, (3, 3), 0)
         # plt.imshow(img1, 'gray'), plt.show()
-
         pass
     else:
         # img1 = cv.bilateralFilter(img1, 5, 75, 75)
@@ -31,7 +30,10 @@ def CalcImageEdge3(imgGrey, isPiece=False):
     abs_grad_x = cv.convertScaleAbs(grad_x)
     abs_grad_y = cv.convertScaleAbs(grad_y)
     img1 = cv.addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0)
-    # whoCare, ret = cv.threshold(ret, 85, 255, cv.THRESH_BINARY)
+
+    if isPiece:
+        # img1 = cv.addWeighted(img1, 1.2, np.zeros(img1.shape, dtype=np.uint8), 0, 0)
+        pass
 
     # plt.imshow(img1, 'gray'), plt.show()
     return img1
@@ -62,7 +64,7 @@ def FeatureMatch(iconGray, backgroundGray):
         # store all the good matches as per Lowe's ratio test.
         for m, n in matches:
             if m.distance < 0.8*n.distance:
-                good.append(m)
+                good.append([m, n])
     else:
         bf = cv.BFMatcher(crossCheck=True)
         matches = bf.match(des1, des2)
@@ -71,7 +73,7 @@ def FeatureMatch(iconGray, backgroundGray):
 
     MIN_MATCH_COUNT = 4
 
-    if len(good) > MIN_MATCH_COUNT:
+    if len(good) > MIN_MATCH_COUNT and False:
         src_pts = np.float32([kp1[m.queryIdx].pt for m in good]).reshape(-1, 1, 2)
         dst_pts = np.float32([kp2[m.trainIdx].pt for m in good]).reshape(-1, 1, 2)
         # print("src_pts: ", src_pts.shape, src_pts)
@@ -93,5 +95,5 @@ def FeatureMatch(iconGray, backgroundGray):
                        singlePointColor=(255, 0, 0),
                        matchesMask=matchesMask,  # draw only inliers
                        flags=2)
-    img3 = cv.drawMatches(img1, kp1, img2, kp2, good, None, **draw_params)
+    img3 = cv.drawMatchesKnn(img1, kp1, img2, kp2, good, None, **draw_params)
     plt.imshow(img3, 'gray'), plt.show()
