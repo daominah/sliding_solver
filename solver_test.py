@@ -46,13 +46,16 @@ diffXExpectations2 = {
     7: 246,
     8: 274,
     9: 205,
+    10: 249,
+    12: 148,
 }
 
-for i in range(0, 10):
+for i in range(0, len(diffXExpectations2)):
     print("_"*40, " i ", i)
     try:
-        begin = "./tests_slide/test10%s_bg_begin.png" % i
-        moved = "./tests_slide/test10%s_bg_moved.png" % i
+        begin = "./tests_slide/test1%02d_bg_begin.png" % i
+        moved = "./tests_slide/test1%02d_bg_moved.png" % i
+        print(begin,moved)
         solver0 = solver.SlidingSolver2Background(begin, moved)
         diffX, pieceX = solver0.Solve(isDebug=False)
         print("ret: diffX: %s, pieceX: %s" % (diffX, pieceX))
